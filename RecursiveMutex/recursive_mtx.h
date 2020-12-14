@@ -41,10 +41,9 @@ inline int RecursiveMutex::try_lock(){
 }
 
 inline int RecursiveMutex::unlock(){
-    //TODO mutex?
     std::unique_lock<std::mutex> busy(locking_mutex);
     if(blocking_thread != std::this_thread::get_id()){
-        return 0;
+        return -1;
         //TODO That's an issue
     }
     if(amt <= 0){
