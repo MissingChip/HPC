@@ -8,7 +8,6 @@ private:
     std::thread::id blocking_thread;
     uint amt = 0;
     std::mutex locking_mutex;
-    std::mutex mutex;
     std::condition_variable condition_var;
 public:
     int lock();
@@ -51,12 +50,9 @@ inline int RecursiveMutex::unlock(){
     if(amt <= 0){
         //TODO Also an issue
     }
-    std::unique_lock<std::mutex> lock(mutex);
     amt--;
     if(amt == 0){
-        lock.unlock();
         condition_var.notify_one();
-        lock.lock();
     }
     return amt;
 }
