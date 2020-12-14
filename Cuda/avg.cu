@@ -16,6 +16,8 @@ void sum_cuda(int iter, int n, float* x)
     for(uint64_t i = index; i + pick < n ; i += stride){
         x[i] = x[i] + x[i+pick];
     }
+    // x[index] = x[index] + x[index+pick];
+
 }
 
 float avg_cuda(int n, float* x){
@@ -38,7 +40,7 @@ float avg_cpu(int n, float* x){
 
 int main(void)
 {
-    int N = 1<<20;
+    int N = 1<<6+1;
     float *x;
     float *y;
 
