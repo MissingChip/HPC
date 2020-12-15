@@ -30,10 +30,10 @@ int main(void)
     }
     printf("std lib time elapsed (avg): \t%f sec\n", (((float)(total_time))/CLOCKS_PER_SEC)/tests);
 
-    std::vector<int> vec(y, y + N);
     total_time = 0;
     for(int i = 0; i < tests; i++){
         memcpy(y, x, sizeof(int)*N);
+        std::vector<int> vec(y, y + N);
         ptime = clock();
         std::sort(vec.begin(), vec.end());
         time = clock();
