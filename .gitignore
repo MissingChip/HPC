@@ -1,1 +1,3 @@
 old_stuff*
+*ignore*
+!.gitignore
