@@ -18,7 +18,7 @@ int sort_anomaly(int n, int* x){
 
 int main(void)
 {
-    int N = 1<<20;
+    int N = 1'000'000;
     int tests = 6;
     int* x;
     int* y;
@@ -27,7 +27,7 @@ int main(void)
 
 
     for (int i = 0; i < N; i++) {
-        x[i] = (int)(rand()%100);
+        x[i] = (int)(rand());
     }
 
     for(int i = 0; i < 10; i++){
@@ -79,10 +79,10 @@ int main(void)
     }
     printf("std lib time elapsed (avg): \t%f sec\n", (((float)(total_time))/CLOCKS_PER_SEC)/tests);
 
-    std::vector<int> vec(y, y + N);
     total_time = 0;
     for(int i = 0; i < tests; i++){
         memcpy(y, x, sizeof(int)*N);
+        std::vector<int> vec(y, y + N);
         ptime = clock();
         std::sort(vec.begin(), vec.end());
         time = clock();

@@ -6,6 +6,32 @@
 #include <thread>
 #include "quicksort.hpp"
 
+int partition(int* nums, int lo, int hi){
+    int pivot = nums[(hi+lo)/2];
+    int i = lo-1;
+    int j = hi+1;
+    while(true){
+        do{
+            i++;
+        }while(nums[i] < pivot);
+        do{
+            j--;
+        } while(nums[j] > pivot);
+        if(i >= j) return j;
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }    
+}
+
+void quicksort(int* nums, int lo, int hi){
+    if(lo < hi){
+        int pivot = partition(nums, lo, hi);
+        quicksort(nums, lo, pivot);
+        quicksort(nums, pivot + 1, hi);
+    }
+}
+
 enum Assignment {
     sort_remaining,
     master,
@@ -27,6 +53,7 @@ public:
     int* partitions;
     int* sizes;
     Assignment* assignments;
+    SortData** new_data;
 
     SortData(int num_threads, int arr_size, int* nums);
     ~SortData();
@@ -42,6 +69,7 @@ SortData::SortData(int n_threads, int arr_size, int* nums){
     partitions = new int[n_threads];
     sizes = new int[n_threads];
     assignments = new Assignment[n_threads];
+    new_data = new SortData*[n_threads];
 }
 SortData::~SortData(){
     delete[] partitions;
@@ -96,21 +124,29 @@ int partition_scratch(int pivot, int n, int* nums, int* scratch){
 
 void quicksort_thread(int idx, struct SortData* data){
     int n;
+    SortData* my_data = nullptr;
     while(true){
         std::unique_lock<std::mutex> lock(data->mutex);
         Assignment as = data->assignments[idx];
+        int* nums = data->assigned_nums[idx];
         if(as == sort_remaining){
             quicksort(data->assigned_nums[idx], 0, data->sizes[idx]);
             return;
         }
         if(as == master){
-
+            while(data->waiting <= data->num_threads-1)
+                data->parent_cv.wait(lock);
+            data->pivot = choose_pivot(data->sizes[idx], nums);
+            data->cv.notify_all();
         }
         else if (as == slave){
-            if(++data->waiting == data->slave_threads_per_block){
+            if(++data->waiting == data->num_threads-1){
                 data->parent_cv.notify_one();
             }
             data->cv.wait(lock);
+        }
+        else {
+            return;
         }
         n = data->sizes[idx];
         int pivot = data->pivot;
@@ -118,10 +154,21 @@ void quicksort_thread(int idx, struct SortData* data){
         int part = partition_scratch(pivot, n, data->assigned_nums[idx], data->assigned_scratch[idx]);
         lock.lock();
         data->partitions[idx] = part;
-        if(++data->waiting == data->num_threads-1){
-            data->parent_cv.notify_one();
+        if (as == slave){
+            if(++data->waiting == data->num_threads-1){
+                data->parent_cv.notify_one();
+            }
+            data->cv.wait(lock);
         }
-        data->cv.wait(lock);
+        else if(as == master){
+            while(data->waiting <= data->num_threads-1)
+                data->parent_cv.wait(lock);
+            int split = data->defragment();
+            if(my_data) delete my_data;
+            int new_num_threads = data->num_threads/2;
+            my_data = new SortData(new_num_threads, split, data->assigned_nums[idx]);
+            if()
+        }
     }
 }
 

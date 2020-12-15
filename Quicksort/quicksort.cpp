@@ -6,8 +6,17 @@
 #include <thread>
 #include "quicksort.hpp"
 
+int choose_pivot(int* nums, int lo, int hi){
+    if(hi-lo < 2){
+        return nums[lo];
+    }
+    int a = (hi + lo)/2;
+    return nums[lo] < nums[a] ? (nums[a] < nums[hi] ? nums[a] : nums[hi]) : 
+        nums[lo] < nums[hi] ? nums[lo] : nums[hi];
+}
+
 int partition(int* nums, int lo, int hi){
-    int pivot = nums[(hi+lo)/2];
+    int pivot = choose_pivot(nums, lo, hi);
     int i = lo-1;
     int j = hi+1;
     while(true){
