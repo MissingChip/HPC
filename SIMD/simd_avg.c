@@ -140,7 +140,7 @@ int main(){
     float* data = malloc(N*sizeof(float));
     for(int i = 0; i < N; i++){
         // data[i] = (float)(rand()%100);
-        data[i] = 1.0;
+        data[i] = (float)i;
     }
     sleep(1);
     printf("Initialized array\n");
