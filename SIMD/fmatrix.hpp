@@ -125,8 +125,7 @@ inline float dotp(size_t n, const float* a, const float* b){
         total += sum(var1 * var2);
     }
     if(i < n){
-        float scratchp[32] = {0};
-        float* scratch = simd_partition(scratchp);
+        alignas(BLOCK_SIZE) float* scratch = {0};
         memcpy(scratch, a + i, (n-i)*sizeof(float));
         var1 = _mm256_load_ps(scratch);
         memcpy(scratch+8, b + i, (n-i)*sizeof(float));
