@@ -1,6 +1,7 @@
 
 #include "fmatrix.hpp"
 #include <cstdlib>
+#include <immintrin.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -72,10 +73,17 @@ static inline void mul2(Mat* a, Mat* b, Mat* o){
     int o_r = o->rows;
     int o_c = o->cols;
     int b_c = b->cols;
+    __v8sf var1, var2, var3;
     memset(oe, 0, sizeof(float)*o->rows*o->cols);
     for(int r = 0; r < o_r; r++){
         for(int c = 0; c < o_c; c++){
-            for(int cb = 0; cb < b_c; cb++){
+            int cb = 0;
+            for(cb = 0; cb + 8 < b_c; cb+=8){
+                var1 = _mm256_broadcast_ss(ae + r*a->cols + c);
+                var2 = _mm256_load_ps(be + c*b->cols + cb);
+                _mm256_store_ps(oe + r*o->cols + cb, var1 * var2 + _mm256_load_ps(oe + r*o->cols + cb));
+            }
+            for(; cb < b_c; cb++){
                 oe[r*o->cols + cb] += ae[r*a->cols + c] * be[c*b->cols + cb];
             }
         }
