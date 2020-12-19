@@ -7,8 +7,7 @@
 #include <cstdlib>
 #include <immintrin.h>
 #include <thread>
-
-const int BLOCK_SIZE = 64;
+#include "cache.h"
 
 class FMatrix {
 protected:

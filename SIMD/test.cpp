@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <vector>
-// #include "matrix.hpp"
 #include "fmatrix.hpp"
+#include "matrix.hpp"
 #include "matmul.h"
 
 template <class T>
@@ -87,8 +87,8 @@ T random_matrix(int rows, int cols, float lower, float upper){
     return mat;
 }
 #define STRING(s) #s
-template<class T, int rows, int cols, int N>
-void test(){
+template<class T, int rows, int cols, int N, class A>
+void test(A& answer){
     srand(0);
     T mat1 = random_matrix<T>(rows, cols ,-1, 2);
     srand(0);
@@ -104,6 +104,10 @@ void test(){
     clock_gettime(CLOCK_REALTIME, &time); 
     dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
     printf("class %s: %f sec\n", typeid(T).name(), dtime);
+    int a = cmp_mat(mato, answer);
+    if(a){
+        printf("FAILED: Matrices not equal");
+    }
 }
 
 int main(){
@@ -120,9 +124,18 @@ int main(){
     timespec ptime, time;
     float dtime;
 
-    test<FMatrix, rows, cols, N>();
-    test<Matrix2, rows, cols, N>();
-    test<Matrix3, rows, cols, N>();
+    clock_gettime(CLOCK_REALTIME, &ptime);
+    FMatrix ans(rows, cols);
+    for(int i = 0; i < N; i++){
+        mul(f, f, ans);
+    }
+    clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    printf("function 0: %f sec\n", dtime);
+    clock_gettime(CLOCK_REALTIME, &ptime);
+
+    test<Matrix<float>, rows, cols, N>(ans);
+    test<VMatrix<float, 8>, rows, cols, N>(ans);
+    // test<Matrix3, rows, cols, N>();
 
     // FMatrix f2(rows, cols);
     // clock_gettime(CLOCK_REALTIME, &ptime);
@@ -132,21 +145,13 @@ int main(){
     // clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
     // printf("function 0: %f sec\n", dtime);
 
-    clock_gettime(CLOCK_REALTIME, &ptime);
-    FMatrix f3(rows, cols);
-    for(int i = 0; i < N; i++){
-        mul(f, f, f3);
-    }
-    clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
-    printf("function 0: %f sec\n", dtime);
-    clock_gettime(CLOCK_REALTIME, &ptime);
-    Matrix2 mo(rows, cols);
-    for(int i = 0; i < N; i++){
-        mul(m2, m2, mo);
-    }
-    clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
-    printf("function 1: %f sec\n", dtime);
-    printf("!= ? %d %f %f\n", cmp_mat(mo, f3), mo[0][0], f3[0][0]);
+    // Matrix2 mo(rows, cols);
+    // for(int i = 0; i < N; i++){
+    //     mul(m2, m2, mo);
+    // }
+    // clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    // printf("function 1: %f sec\n", dtime);
+    // printf("!= ? %d %f %f\n", cmp_mat(mo, f3), mo[0][0], f3[0][0]);
     // print_mat(rows, cols, f3);
     // nl();nl();nl();
     // print_mat(rows, cols, mo);
