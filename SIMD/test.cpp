@@ -90,9 +90,9 @@ T random_matrix(int rows, int cols, float lower, float upper){
 template<class T, int rows, int cols, int N, class A>
 void test(A& answer){
     srand(0);
-    T mat1 = random_matrix<T>(rows, cols ,-1, 2);
+    T mat1 = std::move(random_matrix<T>(rows, cols ,-1, 2));
     srand(0);
-    T mat2 = random_matrix<T>(rows, cols ,-1, 2);
+    T mat2 = std::move(random_matrix<T>(rows, cols ,-1, 2));
 
     T mato(rows, cols);
     timespec ptime, time;
@@ -106,7 +106,10 @@ void test(A& answer){
     printf("class %s: %f sec\n", typeid(T).name(), dtime);
     int a = cmp_mat(mato, answer);
     if(a){
-        printf("FAILED: Matrices not equal");
+        printf("FAILED: Matrices not equal\n");
+    }
+    else{
+        printf("PASSED\n");
     }
 }
 
