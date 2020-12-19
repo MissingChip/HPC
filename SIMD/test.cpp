@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <vector>
-#include "matrix.hpp"
+// #include "matrix.hpp"
 #include "fmatrix.hpp"
 #include "matmul.h"
 
@@ -43,7 +43,8 @@ void print_mat_struct(struct Mat* mat){
     printf("%.2f]", mat->elems[r*mat->cols + c]);
 }
 
-bool cmp_mat(const FMatrix& a, const FMatrix& b, float tolerance = 0.005){
+template<class T1, class T2>
+bool cmp_mat(const T1& a, const T2& b, float tolerance = 0.005){
     if(a.r() != b.r() || a.c() != b.c()) return true;
     for(int r = 0; r < a.r(); r++){
         for(int c = 0; c < a.c(); c++){
@@ -75,32 +76,81 @@ void (*mul_fns[])(Mat* a, Mat* b, Mat* o) = {
     mul0, mul1, mul2, mul3
 };
 
+template <class T>
+T random_matrix(int rows, int cols, float lower, float upper){
+    T mat(rows, cols);
+    for(int r = 0; r < rows; r++){
+        for(int c = 0; c < cols; c++){
+            mat[r][c] = (float)rand()/(float)RAND_MAX*(upper-lower)+lower;
+        }
+    }
+    return mat;
+}
+#define STRING(s) #s
+template<class T, int rows, int cols, int N>
+void test(){
+    srand(0);
+    T mat1 = random_matrix<T>(rows, cols ,-1, 2);
+    srand(0);
+    T mat2 = random_matrix<T>(rows, cols ,-1, 2);
+
+    T mato(rows, cols);
+    timespec ptime, time;
+    float dtime;
+    clock_gettime(CLOCK_REALTIME, &ptime);
+    for(int i = 0; i < N; i++){
+        mul(mat1, mat2, mato);
+    }
+    clock_gettime(CLOCK_REALTIME, &time); 
+    dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    printf("class %s: %f sec\n", typeid(T).name(), dtime);
+}
+
 int main(){
-    int N = 1;
-    int rows = 2, cols = 2;
-    Matrix<float> m;
-    FMatrix f;
+    const int N = 1;
+    const int rows = 128, cols = 128;
+    srand(0);
+    FMatrix f = random_matrix<FMatrix>(rows, cols, -1, 2);
+    srand(0);
+    Matrix2 m2 = random_matrix<Matrix2>(rows, cols, -1, 2);
+    srand(0);
+    Matrix3 m3 = random_matrix<Matrix3>(rows, cols, -1, 2);
     Mat* cmat, * cmato, * cmato2;
 
-    float mat[] = {
-        1.0, 2.0,
-        3.0, 4.0
-    };
+    timespec ptime, time;
+    float dtime;
 
-    
-    f.set(rows, cols, mat);
-    // f = FMatrix(rows, cols, mat);
+    test<FMatrix, rows, cols, N>();
+    test<Matrix2, rows, cols, N>();
+    test<Matrix3, rows, cols, N>();
+
+    // FMatrix f2(rows, cols);
+    // clock_gettime(CLOCK_REALTIME, &ptime);
     // for(int i = 0; i < N; i++){
-    //     m.push_back(Matrix<float>(rows, cols, mat));
-    //     f.push_back(FMatrix(rows, cols, mat));
+    //     mul_nsimd2(f, f, f2);
     // }
-    print_mat(rows, cols, f);
-    nl();
+    // clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    // printf("function 0: %f sec\n", dtime);
 
-    FMatrix f2(rows, cols);
-    mul(f, f, f2);
-    print_mat(rows, cols, f2);
-    nl();
+    clock_gettime(CLOCK_REALTIME, &ptime);
+    FMatrix f3(rows, cols);
+    for(int i = 0; i < N; i++){
+        mul(f, f, f3);
+    }
+    clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    printf("function 0: %f sec\n", dtime);
+    clock_gettime(CLOCK_REALTIME, &ptime);
+    Matrix2 mo(rows, cols);
+    for(int i = 0; i < N; i++){
+        mul(m2, m2, mo);
+    }
+    clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    printf("function 1: %f sec\n", dtime);
+    printf("!= ? %d %f %f\n", cmp_mat(mo, f3), mo[0][0], f3[0][0]);
+    // print_mat(rows, cols, f3);
+    // nl();nl();nl();
+    // print_mat(rows, cols, mo);
+    // nl();
 
     // cmat = new_mat(rows, cols);
     // cmato = new_mat(rows, cols);
@@ -110,8 +160,6 @@ int main(){
     //         cmat->elems[r*cols + c] = ((float)rand())/(INT_MAX/2L);
     //     }
     // }
-    // timespec ptime, time;
-    // float dtime;
     // clock_gettime(CLOCK_REALTIME, &ptime);
     // for(int i = 0; i < N; i++){
     //     mul0(cmat, cmat, cmato);
