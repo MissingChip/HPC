@@ -10,8 +10,8 @@
 const int BLOCK_SIZE = 64;
 
 class FMatrix {
-    int rows, cols;
-    float** elems = nullptr;
+    int rows, cols, stride;
+    float* elems = nullptr;
 
 public:
     FMatrix() : rows{0}, cols{0} {};
@@ -20,21 +20,27 @@ public:
     FMatrix(FMatrix&& m) : rows{m.rows}, cols{m.cols}, elems{m.elems} {m.elems = nullptr;};
     FMatrix& operator=(FMatrix&& m) {m.elems = nullptr; return *this;};
     ~FMatrix();
-    float* operator[](size_t i){return elems[i];}
-    const float* operator[](size_t i) const{return elems[i];}
+    float* operator[](size_t i){return elems + i*stride;}
+    const float* operator[](size_t i) const{return elems + i*stride;}
     void resize(int rows, int cols);
     void read(const float* data);
     void set(int rows, int cols, const float* data);
     void clean();
-
+    int width() const{return rows;}
+    int height() const{return cols;}
+    int r() const{return rows;}
+    int c() const{return cols;}
 
     FMatrix transpose() const;
     friend float dotp(size_t n, const float* a, const float* b);
     friend FMatrix mul(const FMatrix& a, const FMatrix& b);
+    friend void mul(const FMatrix& a, const FMatrix& b, FMatrix& o);
+    friend void mul_slow(const FMatrix& a, const FMatrix& b, FMatrix& o);
 };
+FMatrix operator*(const FMatrix& a, const FMatrix& b);
 FMatrix transpose(const FMatrix& m);
 
-inline FMatrix::FMatrix(int rows, int cols) : rows{rows}, cols{cols} {
+inline FMatrix::FMatrix(int rows, int cols) : rows{rows}, cols{cols}, elems{nullptr} {
     resize(rows, cols);
 }
 
@@ -50,21 +56,14 @@ inline void FMatrix::resize(int rows, int cols){
     clean();
     this->rows = rows;
     this->cols = cols;
-    elems = (float**)aligned_alloc(BLOCK_SIZE, rows*sizeof(*elems));
-    int size = 0;
-    for(int i = 0; i < rows; i++){
-        elems[i] = (float*)aligned_alloc(BLOCK_SIZE, cols*sizeof(**elems));
-        int j = 1;
-        for(j = 1; i + j < rows && j * cols *sizeof(**elems) < BLOCK_SIZE; j++){
-            elems[i+j] = elems[i] + cols*j;
-        }
-        i += j - 1;
-    }
+    this->stride = cols - (cols % 8) + 8;
+    elems = (float*)aligned_alloc(BLOCK_SIZE, stride * rows * sizeof(*elems));
+    memset(elems, 0, stride * rows * sizeof(*elems));
 }
 
 inline void FMatrix::read(const float* data){
     for(int i = 0; i < rows; i++){
-        memcpy(elems[i], data+i*cols, cols*sizeof(float));
+        memcpy(elems + stride * i, data+i*cols, cols*sizeof(float));
     }
 }
 
@@ -75,12 +74,6 @@ inline void FMatrix::set(int rows, int cols, const float* data){
 
 inline void FMatrix::clean(){
     if(elems == nullptr) return;
-    free(elems[0]);
-    for(int i = 1; i < rows; i++){
-        if(elems[i] != elems[i-1] + cols){
-            free(elems[i]);
-        }
-    }
     free(elems);
 }
 
@@ -135,16 +128,45 @@ inline float dotp(size_t n, const float* a, const float* b){
     return total;
 };
 
-inline FMatrix mul(const FMatrix& a, const FMatrix& b){
-    if(a.cols != b.rows){
-        return FMatrix(0, 0);
+inline void mul_slow(const FMatrix& a, const FMatrix& b, FMatrix& o){
+    if(o.rows != a.rows || o.cols != b.cols || a.cols != b.rows){
+        return;
     }
-    FMatrix bt = transpose(b);
-    FMatrix ret = FMatrix(a.rows, b.cols);
-    for(int r = 0; r < ret.rows; r++){
-        for(int c = 0; c < ret.cols; c++){
-            ret[r][c] = dotp(a.cols, a[r], bt[c]);
+    __v8sf var1, var2, var3;
+    memset(o.elems, 0, sizeof(float)*o.rows*o.stride);
+    for(int r = 0; r < o.rows; r++){
+        for(int c = 0; c < o.cols; c++){
+            o[r][c] = 0;
+            for(int d = 0; d < a.cols; d++){
+                o[r][c] += a[r][d] * b[d][c];
+            }
         }
     }
+}
+
+inline FMatrix operator*(const FMatrix& a, const FMatrix& b){
+    return mul(a, b);
+}
+inline FMatrix mul(const FMatrix& a, const FMatrix& b){
+    FMatrix ret(a.cols, b.rows);
+    mul(a, b, ret);
     return ret;
+}
+inline void mul(const FMatrix& a, const FMatrix& b, FMatrix& o){
+    if(o.rows != a.rows || o.cols != b.cols || a.cols != b.rows){
+        return;
+    }
+    __v8sf var1, var2, var3;
+    memset(o.elems, 0, sizeof(float)*o.rows*o.stride);
+    for(int r = 0; r < o.rows; r++){
+        for(int c = 0; c < o.cols; c++){
+            var1 = _mm256_broadcast_ss(a[r] + c);
+            int cb = 0;
+            for(cb = 0; cb + 8 <= b.stride; cb+=8){
+                var2 = _mm256_load_ps(b[c] + cb);
+                float* store = o.elems + r*o.stride + cb;
+                _mm256_store_ps(store, var1 * var2 + _mm256_load_ps(store));
+            }
+        }
+    }
 }

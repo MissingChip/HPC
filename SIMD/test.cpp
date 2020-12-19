@@ -33,14 +33,24 @@ void print_mat_struct(struct Mat* mat){
     int cols = mat->cols;
     for(r = 0; r < rows-1; r++){
         for(c = 0; c < cols-1; c++){
-            printf("%f, ", mat->elems[r*mat->cols + c]);
+            printf("%.2f, ", mat->elems[r*mat->cols + c]);
         }
-        printf("%f: ", mat->elems[r*mat->cols + c]);
+        printf("%.2f: ", mat->elems[r*mat->cols + c]);
     }
     for(c = 0; c < cols-1; c++){
-        printf("%f, ", mat->elems[r*mat->cols + c]);
+        printf("%.2f, ", mat->elems[r*mat->cols + c]);
     }
-    printf("%f]", mat->elems[r*mat->cols + c]);
+    printf("%.2f]", mat->elems[r*mat->cols + c]);
+}
+
+bool cmp_mat(const FMatrix& a, const FMatrix& b, float tolerance = 0.005){
+    if(a.r() != b.r() || a.c() != b.c()) return true;
+    for(int r = 0; r < a.r(); r++){
+        for(int c = 0; c < a.c(); c++){
+            if(abs(a[r][c] - b[r][c]) > tolerance) return true;
+        }
+    }
+    return false;
 }
 
 bool cmp_mat_struct(struct Mat* a, struct Mat* b){
@@ -51,7 +61,7 @@ bool cmp_mat_struct(struct Mat* a, struct Mat* b){
     int cols = a->cols;
     for(r = 0; r < rows; r++){
         for(c = 0; c < cols; c++){
-            if(a->elems[r*a->cols + c] != b->elems[r*b->cols + c]) return 1;
+            if(abs(a->elems[r*a->cols + c] - b->elems[r*b->cols + c]) > 0.005) return 1;
         }
     }
     return 0;
@@ -61,9 +71,13 @@ void nl(){
     printf("\n");
 }
 
+void (*mul_fns[])(Mat* a, Mat* b, Mat* o) = {
+    mul0, mul1, mul2, mul3
+};
+
 int main(){
     int N = 1;
-    int rows = 2000, cols = 2000;
+    int rows = 2, cols = 2;
     Matrix<float> m;
     FMatrix f;
     Mat* cmat, * cmato, * cmato2;
@@ -74,51 +88,52 @@ int main(){
     };
 
     
-    // f.set(rows, cols, mat);
+    f.set(rows, cols, mat);
     // f = FMatrix(rows, cols, mat);
     // for(int i = 0; i < N; i++){
     //     m.push_back(Matrix<float>(rows, cols, mat));
     //     f.push_back(FMatrix(rows, cols, mat));
     // }
-    // print_mat(rows, cols, f);
-    // nl();
+    print_mat(rows, cols, f);
+    nl();
 
-    FMatrix f2 = mul(f, f);
-    // print_mat(rows, cols, f2);
-    // nl();
+    FMatrix f2(rows, cols);
+    mul(f, f, f2);
+    print_mat(rows, cols, f2);
+    nl();
 
-    cmat = new_mat(rows, cols);
-    cmato = new_mat(rows, cols);
-    cmato2 = new_mat(rows, cols);
-    for(int r = 0; r < rows; r++){
-        for(int c = 0; c < cols; c++){
-            cmat->elems[r*cols + c] = ((float)rand())/(INT_MAX/2L);
-        }
-    }
-    int ptime, time;
-    float dtime;
-    ptime = clock();
-    for(int i = 0; i < N; i++){
-        mul0(cmat, cmat, cmato);
-    }
-    time = clock(); dtime = (time - ptime)/(float)CLOCKS_PER_SEC;
-    printf("%f sec\n", dtime);
-    // print_mat_struct(cmato);
-    // nl();
-    ptime = clock();
-    for(int i = 0; i < N; i++){
-        mul1(cmat, cmat, cmato2);
-    }
-    time = clock(); dtime = (time - ptime)/(float)CLOCKS_PER_SEC;
-    printf("%f sec\n", dtime);
-    printf("not equal? %d\n", cmp_mat_struct(cmato, cmato2));
-    ptime = clock();
-    for(int i = 0; i < N; i++){
-        mul2(cmat, cmat, cmato2);
-    }
-    time = clock(); dtime = (time - ptime)/(float)CLOCKS_PER_SEC;
-    printf("%f sec\n", dtime);
-    printf("not equal? %d\n", cmp_mat_struct(cmato, cmato2));
+    // cmat = new_mat(rows, cols);
+    // cmato = new_mat(rows, cols);
+    // cmato2 = new_mat(rows, cols);
+    // for(int r = 0; r < rows; r++){
+    //     for(int c = 0; c < cols; c++){
+    //         cmat->elems[r*cols + c] = ((float)rand())/(INT_MAX/2L);
+    //     }
+    // }
+    // timespec ptime, time;
+    // float dtime;
+    // clock_gettime(CLOCK_REALTIME, &ptime);
+    // for(int i = 0; i < N; i++){
+    //     mul0(cmat, cmat, cmato);
+    // }
+    // clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    // printf("function 0: %f sec\n", dtime);
+    // // print_mat_struct(cmato);
+    // // nl();
+    // for(int fn = 1; fn < 4; fn++){
+    //     clock_gettime(CLOCK_REALTIME, &ptime);
+    //     for(int i = 0; i < N; i++){
+    //         mul_fns[fn](cmat, cmat, cmato2);
+    //     }
+    //     clock_gettime(CLOCK_REALTIME, &time); dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
+    //     printf("function %d: %f sec\n", fn, dtime);
+    //     int neq = cmp_mat_struct(cmato, cmato2);
+    //     printf("not equal? %d\n", neq);
+    //     if(neq){
+    //         print_mat_struct(cmato); nl();
+    //         print_mat_struct(cmato2); nl();
+    //     }
+    // }
     // print_mat_struct(cmato);
     // nl();
 }
