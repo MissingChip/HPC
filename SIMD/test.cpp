@@ -106,10 +106,10 @@ void test(A& answer, const char* label = ""){
     dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
     printf("%s: %f sec\n", label, dtime);
     int a = cmp_mat(mato, answer);
-    print_mat(rows, cols, answer);
-    nl();
-    print_mat(rows, cols, mato);
-    nl();
+    // print_mat(rows, cols, answer);
+    // nl();
+    // print_mat(rows, cols, mato);
+    // nl();
     if(a){
         printf("\tFAILED: Matrices not equal\n");
     }
@@ -141,10 +141,10 @@ int main(){
     printf("function 0: %f sec\n", dtime);
     clock_gettime(CLOCK_REALTIME, &ptime);
 
-    // test<Matrix<float>, rows, cols, N>(ans, "Matrix<float>");
-    // test<VMatrix<float>, rows, cols, N>(ans, "VMatrix");
+    test<Matrix<float>, rows, cols, N>(ans, "Matrix<float>");
+    test<VMatrix<float>, rows, cols, N>(ans, "VMatrix");
     test<VMatrix<double, 4>, rows, cols, N>(ans, "VMatrix double");
-    // test<MatTest<REGULAR>, rows, cols, N>(ans, "regular");
-    // test<MatTest<BLOCKED>, rows, cols, N>(ans, "blocked");
-    // test<MatTest<SEQUENTIAL>, rows, cols, N>(ans, "sequential");
+    test<MatTest<REGULAR>, rows, cols, N>(ans, "regular");
+    test<MatTest<BLOCKED>, rows, cols, N>(ans, "blocked");
+    test<MatTest<SEQUENTIAL>, rows, cols, N>(ans, "sequential");
 }
