@@ -43,9 +43,9 @@ inline void mul(const MatTest<BLOCKED>& a, const MatTest<BLOCKED>& b, MatTest<BL
     for(i = 0; i < o.r(); i+=B){
         for(j = 0; j < o.c(); j+=B){
             for(k = 0; k < a.c(); k+=B){
-                for(i1 = 0; i1 < i+B && i1 < o.r(); i1++){
-                    for(j1 = 0; j1 < j+B && j1 < o.c(); j1++){
-                        for(k1 = 0; k1 < k+B && k1 < a.c(); k1++){
+                for(i1 = i; i1 < i+B && i1 < o.r(); i1++){
+                    for(j1 = j; j1 < j+B && j1 < o.c(); j1++){
+                        for(k1 = k; k1 < k+B && k1 < a.c(); k1++){
                             o[i1][j1] += a[i1][k1]*b[k1][j1];
                         }
                     }

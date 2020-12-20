@@ -88,7 +88,7 @@ T random_matrix(int rows, int cols, float lower, float upper){
     return mat;
 }
 
-template<class T, int rows, int cols, int N, class A>
+template<class T, int rows = 2048, int cols = 2048, int N = 1, class A>
 void test(A& answer, const char* label = ""){
     srand(0);
     T mat1 = std::move(random_matrix<T>(rows, cols ,-1, 2));
