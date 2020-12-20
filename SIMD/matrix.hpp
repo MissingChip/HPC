@@ -37,8 +37,9 @@ public:
     int s() const{return rows;}
     T* row(size_t i) {return elems + i*stride;}
     T* row(size_t i) const{return elems + i*stride;}
-    static int calculate_stride(int cols) {return cols;}
+    virtual int calculate_stride(int cols) {return cols;}
     static T* allocate(size_t e) {return (T*)aligned_alloc(BLOCK_SIZE, e*sizeof(T));};
+    void reallocate();
     static void deallocate(T* elems) {free(elems);};
 
     Matrix transpose() const;
@@ -77,10 +78,15 @@ inline Matrix<T>::~Matrix(){
 
 template<class T>
 inline void Matrix<T>::resize(int rows, int cols){
-    clean();
     this->rows = rows;
     this->cols = cols;
     this->stride = calculate_stride(cols);
+    reallocate();
+}
+
+template<class T>
+inline void Matrix<T>::reallocate(){
+    clean();
     elems = allocate(stride * rows);
     clear();
 }
@@ -147,8 +153,8 @@ template<class T = float, int V = 8>
 class VMatrix : public Matrix<T>{
 public:
     VMatrix() : Matrix<T>() {}
-    VMatrix(int rows, int cols) : Matrix<T>(rows, cols) {}
-    static int calculate_stride(int cols){printf("AAAAAA\n"); return cols - (cols % V) + V;}
+    VMatrix(int rows, int cols) {this->rows = rows; this->cols = cols; this->stride = calculate_stride(cols); Matrix<T>::reallocate();}
+    int calculate_stride(int cols) override {return cols - (cols % V) + V;}
 };
 
 template<>

@@ -120,7 +120,7 @@ void test(A& answer, const char* label = ""){
 
 int main(){
     const int N = 1;
-    const int rows = 16, cols = 16;
+    const int rows = 1024, cols = 1024;
     srand(0);
     FMatrix f = random_matrix<FMatrix>(rows, cols, -1, 2);
     srand(0);
