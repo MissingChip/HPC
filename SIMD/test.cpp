@@ -107,7 +107,7 @@ void test(A& answer, const char* label = ""){
     printf("%s: %f sec\n", label, dtime);
     int a = cmp_mat(mato, answer);
     if(a){
-        printf("FAILED: Matrices not equal\n");
+        printf("\tFAILED: Matrices not equal\n");
     }
     else{
         //printf("PASSED\n");
@@ -143,5 +143,4 @@ int main(){
     test<MatTest<REGULAR>, rows, cols, N>(ans, "regular");
     test<MatTest<BLOCKED>, rows, cols, N>(ans, "blocked");
     test<MatTest<SEQUENTIAL>, rows, cols, N>(ans, "sequential");
-
 }
