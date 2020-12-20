@@ -18,15 +18,15 @@ protected:
 public:
     Matrix() : rows{0}, cols{0}, elems{nullptr} {};
     Matrix(int rows, int cols);
-    Matrix(int rows, int cols, const float* data);
+    Matrix(int rows, int cols, const T* data);
     constexpr Matrix(Matrix&& m) : rows{m.rows}, cols{m.cols}, stride{m.stride},elems{m.elems} {m.elems = nullptr;};
     constexpr Matrix& operator=(Matrix&& m) {return std::move(m);};
     ~Matrix();
-    float* operator[](size_t i){return elems + i*stride;}
-    const float* operator[](size_t i) const{return elems + i*stride;}
+    T* operator[](size_t i){return elems + i*stride;}
+    const T* operator[](size_t i) const{return elems + i*stride;}
     void resize(int rows, int cols);
-    void read(const float* data);
-    void set(int rows, int cols, const float* data);
+    void read(const T* data);
+    void set(int rows, int cols, const T* data);
     void clear();
     void clean();
     int width() const{return rows;}
@@ -34,11 +34,11 @@ public:
     int r() const{return rows;}
     int c() const{return cols;}
     int s() const{return rows;}
-    float* row(size_t i) {return elems + i*stride;}
-    float* row(size_t i) const{return elems + i*stride;}
+    T* row(size_t i) {return elems + i*stride;}
+    T* row(size_t i) const{return elems + i*stride;}
     constexpr static int calculate_stride(int cols) {return cols;}
-    static float* allocate(size_t e) {return (float*)aligned_alloc(BLOCK_SIZE, e*sizeof(T));};
-    static void deallocate(float* elems) {free(elems);};
+    static T* allocate(size_t e) {return (T*)aligned_alloc(BLOCK_SIZE, e*sizeof(T));};
+    static void deallocate(T* elems) {free(elems);};
 
     Matrix transpose() const;
     friend float dotp(size_t n, const float* a, const float* b);
@@ -87,12 +87,12 @@ inline void Matrix<T>::resize(int rows, int cols){
 template<class T>
 inline void Matrix<T>::read(const float* data){
     for(int i = 0; i < rows; i++){
-        memcpy(elems + stride * i, data+i*cols, cols*sizeof(float));
+        memcpy(elems + stride * i, data+i*cols, cols*sizeof(T));
     }
 }
 
 template<class T>
-inline void Matrix<T>::set(int rows, int cols, const float* data){
+inline void Matrix<T>::set(int rows, int cols, const T* data){
     resize(rows, cols);
     read(data);
 }
@@ -170,6 +170,25 @@ inline void mul(const VMatrix<float, 8>& a, const VMatrix<float, 8>& b, VMatrix<
     }
 }
 template<>
+inline void mul(const VMatrix<double, 4>& a, const VMatrix<double, 4>& b, VMatrix<double, 4>& o){
+    if(o.r() != a.r() || o.c() != b.c() || a.c() != b.r()){
+        return;
+    }
+    __v4df var1, var2, var3;
+    o.clear();
+    for(int r = 0; r < o.r(); r++){
+        for(int c = 0; c < o.c(); c++){
+            var1 = _mm256_broadcast_sd(a[r] + c);
+            int cb = 0;
+            for(cb = 0; cb < b.s(); cb+=8){
+                var2 = _mm256_load_pd(b[c] + cb);
+                double* store = o.row(r) + cb;
+                _mm256_store_pd(store, var1 * var2 + _mm256_load_pd(store));
+            }
+        }
+    }
+}
+template<>
 inline void mul_mt_wk(int beg_row, int end_row, const VMatrix<float, 8>* a, const VMatrix<float, 8>* b, VMatrix<float, 8>* o){
     __v8sf var1, var2, var3;
     o->clear();
@@ -185,8 +204,8 @@ inline void mul_mt_wk(int beg_row, int end_row, const VMatrix<float, 8>* a, cons
         }
     }
 }
-template<>
-inline void mul_mt(const VMatrix<float, 8>& a, const VMatrix<float, 8>& b, VMatrix<float, 8>& o){
+template<class T, int V>
+inline void mul_mt(const VMatrix<T, V>& a, const VMatrix<T, V>& b, VMatrix<T, V>& o){
     if(o.r() != a.r() || o.c() != b.c() || a.c() != b.r()){
         return;
     }
@@ -194,13 +213,13 @@ inline void mul_mt(const VMatrix<float, 8>& a, const VMatrix<float, 8>& b, VMatr
     int r = 0;
     int i = 0;
     std::thread threads[8];
-    VMatrix<float, 8>* o_arr[9];
+    VMatrix<T, V>* o_arr[9];
     o.clear();
     for(i = 0; i < 9; i++){
-        o_arr[i] = new VMatrix<float, 8>(o.r(), o.c());
+        o_arr[i] = new VMatrix<T, V>(o.r(), o.c());
     }
     for(i = 0, r = 0; r + n < a.r(); r += n, i++){
-        threads[i] = std::thread(mul_mt_wk<VMatrix<float, 8>>, r, r+n, &a, &b, o_arr[i]);
+        threads[i] = std::thread(mul_mt_wk<VMatrix<T, V>>, r, r+n, &a, &b, o_arr[i]);
     }
     if(r < a.r()){
         mul_mt_wk(r, a.r(), &a, &b, o_arr[i]);
