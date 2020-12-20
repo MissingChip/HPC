@@ -6,6 +6,7 @@
 #include <vector>
 #include "fmatrix.hpp"
 #include "matrix.hpp"
+#include "mat_test.hpp"
 #include "matmul.h"
 
 template <class T>
@@ -139,6 +140,8 @@ int main(){
     test<Matrix<float>, rows, cols, N>(ans);
     test<VMatrix<float, 8>, rows, cols, N>(ans);
     test<Matrix2, rows, cols, N>(ans);
+    test<MatTest<REGULAR>, rows, cols, N>(ans);
+    test<MatTest<BLOCKED>, rows, cols, N>(ans);
 
     // FMatrix f2(rows, cols);
     // clock_gettime(CLOCK_REALTIME, &ptime);
