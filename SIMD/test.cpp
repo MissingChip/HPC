@@ -88,7 +88,7 @@ T random_matrix(int rows, int cols, float lower, float upper){
     return mat;
 }
 
-template<class T, int rows, int cols, int N, class A>
+template<class T, int rows = 2048, int cols = 2048, int N = 1, class A>
 void test(A& answer, const char* label = ""){
     srand(0);
     T mat1 = std::move(random_matrix<T>(rows, cols ,-1, 2));
@@ -106,6 +106,10 @@ void test(A& answer, const char* label = ""){
     dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
     printf("%s: %f sec\n", label, dtime);
     int a = cmp_mat(mato, answer);
+    // print_mat(rows, cols, answer);
+    // nl();
+    // print_mat(rows, cols, mato);
+    // nl();
     if(a){
         printf("\tFAILED: Matrices not equal\n");
     }
@@ -116,7 +120,7 @@ void test(A& answer, const char* label = ""){
 
 int main(){
     const int N = 1;
-    const int rows = 128, cols = 128;
+    const int rows = 1024, cols = 1024;
     srand(0);
     FMatrix f = random_matrix<FMatrix>(rows, cols, -1, 2);
     srand(0);
@@ -139,7 +143,7 @@ int main(){
 
     test<Matrix<float>, rows, cols, N>(ans, "Matrix<float>");
     test<VMatrix<float>, rows, cols, N>(ans, "VMatrix");
-    test<Matrix2, rows, cols, N>(ans, "Matrix2");
+    test<VMatrix<double, 4>, rows, cols, N>(ans, "VMatrix double");
     test<MatTest<REGULAR>, rows, cols, N>(ans, "regular");
     test<MatTest<BLOCKED>, rows, cols, N>(ans, "blocked");
     test<MatTest<SEQUENTIAL>, rows, cols, N>(ans, "sequential");
