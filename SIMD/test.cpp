@@ -140,7 +140,8 @@ int main(){
     test<Matrix<float>, rows, cols, N>(ans, "Matrix<float>");
     test<VMatrix<float>, rows, cols, N>(ans, "VMatrix");
     test<Matrix2, rows, cols, N>(ans, "Matrix2");
-    test<MatTest<REGULAR>, rows, cols, N>(ans, "MatTest<REGULAR>");
-    test<MatTest<BLOCKED>, rows, cols, N>(ans, "MatTest<BLOCKED>");
+    test<MatTest<REGULAR>, rows, cols, N>(ans, "regular");
+    test<MatTest<BLOCKED>, rows, cols, N>(ans, "blocked");
+    test<MatTest<SEQUENTIAL>, rows, cols, N>(ans, "sequential");
 
 }
