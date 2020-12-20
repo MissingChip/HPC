@@ -142,7 +142,7 @@ inline void mul(const T& a, const T& b, T& o){
     }
 }
 
-template<class T, int V = 8>
+template<class T = float, int V = 8>
 class VMatrix : public Matrix<T>{
 public:
     VMatrix() : Matrix<T>() {}

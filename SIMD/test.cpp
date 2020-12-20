@@ -89,7 +89,7 @@ T random_matrix(int rows, int cols, float lower, float upper){
 }
 
 template<class T, int rows, int cols, int N, class A>
-void test(A& answer){
+void test(A& answer, const char* label = ""){
     srand(0);
     T mat1 = std::move(random_matrix<T>(rows, cols ,-1, 2));
     srand(0);
@@ -104,13 +104,13 @@ void test(A& answer){
     }
     clock_gettime(CLOCK_REALTIME, &time); 
     dtime = (time.tv_sec - ptime.tv_sec)+(time.tv_nsec - ptime.tv_nsec)/(float)1e9;
-    printf("class %s: %f sec\n", typeid(T).name(), dtime);
+    printf("%s: %f sec\n", label, dtime);
     int a = cmp_mat(mato, answer);
     if(a){
         printf("FAILED: Matrices not equal\n");
     }
     else{
-        printf("PASSED\n");
+        //printf("PASSED\n");
     }
 }
 
@@ -137,10 +137,10 @@ int main(){
     printf("function 0: %f sec\n", dtime);
     clock_gettime(CLOCK_REALTIME, &ptime);
 
-    test<Matrix<float>, rows, cols, N>(ans);
-    test<VMatrix<float, 8>, rows, cols, N>(ans);
-    test<Matrix2, rows, cols, N>(ans);
-    test<MatTest<REGULAR>, rows, cols, N>(ans);
-    test<MatTest<BLOCKED>, rows, cols, N>(ans);
+    test<Matrix<float>, rows, cols, N>(ans, "Matrix<float>");
+    test<VMatrix<float>, rows, cols, N>(ans, "VMatrix");
+    test<Matrix2, rows, cols, N>(ans, "Matrix2");
+    test<MatTest<REGULAR>, rows, cols, N>(ans, "MatTest<REGULAR>");
+    test<MatTest<BLOCKED>, rows, cols, N>(ans, "MatTest<BLOCKED>");
 
 }
