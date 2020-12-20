@@ -5,6 +5,7 @@
 #include <memory>
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 #include <immintrin.h>
 #include <thread>
 #include "cache.h"
@@ -36,7 +37,7 @@ public:
     int s() const{return rows;}
     T* row(size_t i) {return elems + i*stride;}
     T* row(size_t i) const{return elems + i*stride;}
-    constexpr static int calculate_stride(int cols) {return cols;}
+    static int calculate_stride(int cols) {return cols;}
     static T* allocate(size_t e) {return (T*)aligned_alloc(BLOCK_SIZE, e*sizeof(T));};
     static void deallocate(T* elems) {free(elems);};
 
@@ -65,7 +66,7 @@ inline Matrix<T>::Matrix(int rows, int cols) : rows{rows}, cols{cols}, elems{nul
 }
 
 template<class T>
-inline Matrix<T>::Matrix(int rows, int cols, const float* data) : Matrix{rows, cols} {
+inline Matrix<T>::Matrix(int rows, int cols, const T* data) : Matrix{rows, cols} {
     read(data);
 }
 
@@ -85,7 +86,7 @@ inline void Matrix<T>::resize(int rows, int cols){
 }
 
 template<class T>
-inline void Matrix<T>::read(const float* data){
+inline void Matrix<T>::read(const T* data){
     for(int i = 0; i < rows; i++){
         memcpy(elems + stride * i, data+i*cols, cols*sizeof(T));
     }
@@ -147,7 +148,7 @@ class VMatrix : public Matrix<T>{
 public:
     VMatrix() : Matrix<T>() {}
     VMatrix(int rows, int cols) : Matrix<T>(rows, cols) {}
-    constexpr static int calculate_stride(int cols){return cols - (cols % V) + V;}
+    static int calculate_stride(int cols){printf("AAAAAA\n"); return cols - (cols % V) + V;}
 };
 
 template<>
@@ -180,7 +181,7 @@ inline void mul(const VMatrix<double, 4>& a, const VMatrix<double, 4>& b, VMatri
         for(int c = 0; c < o.c(); c++){
             var1 = _mm256_broadcast_sd(a[r] + c);
             int cb = 0;
-            for(cb = 0; cb < b.s(); cb+=8){
+            for(cb = 0; cb < b.s(); cb+=4){
                 var2 = _mm256_load_pd(b[c] + cb);
                 double* store = o.row(r) + cb;
                 _mm256_store_pd(store, var1 * var2 + _mm256_load_pd(store));
