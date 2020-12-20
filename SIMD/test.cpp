@@ -86,7 +86,7 @@ T random_matrix(int rows, int cols, float lower, float upper){
     }
     return mat;
 }
-#define STRING(s) #s
+
 template<class T, int rows, int cols, int N, class A>
 void test(A& answer){
     srand(0);
@@ -138,7 +138,7 @@ int main(){
 
     test<Matrix<float>, rows, cols, N>(ans);
     test<VMatrix<float, 8>, rows, cols, N>(ans);
-    // test<Matrix3, rows, cols, N>();
+    test<Matrix2, rows, cols, N>(ans);
 
     // FMatrix f2(rows, cols);
     // clock_gettime(CLOCK_REALTIME, &ptime);

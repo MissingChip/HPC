@@ -142,13 +142,11 @@ inline void mul(const T& a, const T& b, T& o){
     }
 }
 
-template<class T, int V>
+template<class T, int V = 8>
 class VMatrix : public Matrix<T>{
 public:
     VMatrix() : Matrix<T>() {}
     VMatrix(int rows, int cols) : Matrix<T>(rows, cols) {}
-    VMatrix(VMatrix&& m) : Matrix<T>(std::move(m)) {};
-    constexpr VMatrix& operator=(VMatrix&& m) {return static_cast<Matrix<T>&>(Matrix<T>::operator=(std::move(m)));};
     constexpr static int calculate_stride(int cols){return cols - (cols % V) + V;}
 };
 
