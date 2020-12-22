@@ -9,6 +9,7 @@ private:
     std::mutex locking_mutex;
     std::condition_variable condition_var;
 public:
+    RecursiveMutex(uint amt = 1) : amt{amt} {};
     int lock();
     int try_lock();
     int unlock();
@@ -32,9 +33,6 @@ inline int RecursiveMutex::try_lock(){
 
 inline int RecursiveMutex::unlock(){
     std::unique_lock<std::mutex> busy(locking_mutex);
-    if(amt < 0){
-        //TODO an issue
-    }
     condition_var.notify_one();
     return amt++;
 }
