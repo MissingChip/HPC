@@ -3,19 +3,19 @@
 #include <thread>
 #include <condition_variable>
 
-class RecursiveMutex {
+class CountingSemaphore {
 private:
     uint amt = 0;
     std::mutex locking_mutex;
     std::condition_variable condition_var;
 public:
-    RecursiveMutex(uint amt = 1) : amt{amt} {};
+    CountingSemaphore(uint amt = 1) : amt{amt} {};
     int lock();
     int try_lock();
     int unlock();
 };
 
-inline int RecursiveMutex::lock(){
+inline int CountingSemaphore::lock(){
     std::unique_lock<std::mutex> busy(locking_mutex);
     while(amt <= 0){
         condition_var.wait(busy);
@@ -23,7 +23,7 @@ inline int RecursiveMutex::lock(){
     return amt--;
 }
 
-inline int RecursiveMutex::try_lock(){
+inline int CountingSemaphore::try_lock(){
     std::unique_lock<std::mutex> busy(locking_mutex);
     if(amt <= 0){
         return 0;
@@ -31,7 +31,7 @@ inline int RecursiveMutex::try_lock(){
     return amt--;
 }
 
-inline int RecursiveMutex::unlock(){
+inline int CountingSemaphore::unlock(){
     std::unique_lock<std::mutex> busy(locking_mutex);
     condition_var.notify_one();
     return amt++;

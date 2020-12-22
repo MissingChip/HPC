@@ -42,12 +42,6 @@ void f2() {
 
 int
 main() {
-    // {
-    //     std::unique_lock<std::mutex> lock(m2);
-    //     std::condition_variable a;
-    //     a.notify_one();
-    //     a.wait(lock);
-    // }
 
     std::thread t1{f1};
     std::thread t2{f2};
