@@ -1,6 +1,8 @@
 *.o
 a.out
 vgcore.*
+test*
+!test*.*
 old_stuff*
 *ignore*
 !.gitignore
